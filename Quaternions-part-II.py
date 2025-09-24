@@ -524,3 +524,97 @@ class YXZQuaternionExpansion(Scene):
         self.play(*[FadeOut(mob) for mob in self.mobjects])
         self.wait(1) # Wait after fading outs
 
+
+# --- New Scene: Slerp Coefficients Plot ---
+class SlerpCoefficientsPlot(Scene):
+    def construct(self):
+        # Animate theta from 20° to 160°
+        theta_tracker = ValueTracker(np.deg2rad(0.01))
+
+        def get_ymax(theta):
+            # Avoid division by zero for theta near 0
+            if np.isclose(np.sin(theta), 0):
+                return 2.0
+            t_vals = np.linspace(0, 1, 200)
+            s0 = np.abs(np.sin((1 - t_vals) * theta) / np.sin(theta))
+            s1 = np.abs(np.sin(t_vals * theta) / np.sin(theta))
+            max_val = np.max([s0, s1])
+            return max(1.1, max_val * 1.1)
+
+        def get_scene_group():
+            theta = theta_tracker.get_value()
+            y_max = get_ymax(theta)
+            axes = Axes(
+                x_range=[0, 1, 0.2],
+                y_range=[0, y_max, 0.2],
+                axis_config={"color": WHITE},
+                x_length=7,
+                y_length=4,
+            )
+            axes.add_coordinates()
+            x_label = axes.get_x_axis_label(Tex("t", font_size=28))
+            y_label = axes.get_y_axis_label(Tex(r"$s_n$", font_size=28))
+            legend = VGroup(
+                Line(color=BLUE).set_stroke(width=6).set_length(0.5),
+                Tex(r"$s_0 = \frac{\sin((1-t)\theta)}{\sin\theta}$", color=BLUE, font_size=28),
+                Line(color=YELLOW).set_stroke(width=6).set_length(0.5),
+                Tex(r"$s_1 = \frac{\sin(t\theta)}{\sin\theta}$", color=YELLOW, font_size=28),
+            ).arrange(RIGHT, buff=0.3).next_to(axes, UP)
+            title = Tex(
+                r"Slerp Coefficients for $\theta = {:.0f}^\circ$".format(np.rad2deg(theta)),
+                font_size=36
+            ).next_to(legend, UP)
+            s0_graph = axes.plot(
+                lambda t: np.sin((1-t)*theta)/np.sin(theta) if not np.isclose(np.sin(theta), 0) else 1.0,
+                color=BLUE, x_range=[0,1]
+            ).set_clip_path(axes)
+            s1_graph = axes.plot(
+                lambda t: np.sin(t*theta)/np.sin(theta) if not np.isclose(np.sin(theta), 0) else 1.0,
+                color=YELLOW, x_range=[0,1]
+            ).set_clip_path(axes)
+            return VGroup(axes, x_label, y_label, legend, title, s0_graph, s1_graph)
+
+        scene_group = always_redraw(get_scene_group)
+        self.add(scene_group)
+        self.wait(0.5)
+        self.play(theta_tracker.animate.set_value(np.deg2rad(180)), run_time=20, rate_func=there_and_back)
+        self.wait(2)
+
+
+
+
+# --- New Scene: Vector Chain Demo ---
+class VectorChainDemo(Scene):
+    def construct(self):
+        # Define vectors
+        v1 = np.array([2, 1, 0])
+        v2 = np.array([-1.7, -1, 0])
+        n1 = 10
+        n2 = 10
+
+        # Start at origin
+        points = [np.array([0, 0, 0])]
+        # Add 10 of v1
+        for _ in range(n1):
+            points.append(points[-1] + v1)
+        # Add 10 of v2
+        for _ in range(n2):
+            points.append(points[-1] + v2)
+
+        # Draw the chain
+        chain = VGroup()
+
+        for i in range(1, len(points)):
+            seg = Arrow(start=points[i-1], end=points[i], buff=0, stroke_width=6, color=BLUE if i <= n1 else YELLOW)
+            chain.add(seg)
+
+        # Dots at each joint
+        dots = VGroup(*[Dot(point=pt, radius=0.07, color=WHITE) for pt in points])
+
+        
+        # Center everything
+        group = VGroup(chain, dots).move_to(ORIGIN)
+
+        self.play(Create(chain), FadeIn(dots), run_time=10)
+        self.wait(0.5)
+
