@@ -515,6 +515,7 @@ class YXZQuaternionExpansion(Scene):
                 (Transform(title, new_title) if n == 1 else FadeIn(title)),
                 run_time=1
             )
+            self.wait(1)
             expanded_vars = next_tex
             n = 1
 
