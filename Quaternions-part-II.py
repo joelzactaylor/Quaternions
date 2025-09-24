@@ -526,7 +526,7 @@ class YXZQuaternionExpansion(Scene):
 
 
 # --- New Scene: Slerp Coefficients Plot ---
-class SlerpCoefficientsPlot1(Scene):
+class SlerpCoefficientsPlot(Scene):
 
     def construct(self):
         # Animate theta from 0.01° to 180°
@@ -584,66 +584,6 @@ class SlerpCoefficientsPlot1(Scene):
         self.add(scene_group)
         self.wait(0.5)
         self.play(theta_tracker.animate.set_value(np.deg2rad(179.9)), run_time=5, rate_func=smooth)
-
-
-class SlerpCoefficientsPlot2(Scene):
-
-    def construct(self):
-        # Animate theta from 0.01° to 180°
-        theta_tracker = ValueTracker(np.deg2rad(179.9))
-
-
-        def get_ymax(theta):
-            # Avoid division by zero for theta near 0
-            if np.isclose(np.sin(theta), 0):
-                return 1.1
-            t_vals = np.linspace(0, 1, 200)
-            s0 = np.abs(np.sin((1 - t_vals) * theta) / np.sin(theta))
-            s1 = np.abs(np.sin(t_vals * theta) / np.sin(theta))
-            max_val = np.max([s0, s1])
-            return max(1.1, max_val * 1.1)
-
-
-        def get_scene():
-            theta = theta_tracker.get_value()
-            y_max = get_ymax(theta)
-            axes = Axes(
-                x_range=[0, 1, 0.2],
-                y_range=[0, y_max, 0.2],
-                axis_config={"color": WHITE},
-                x_length=7,
-                y_length=4,
-            )
-            axes.add_coordinates()
-            x_label = axes.get_x_axis_label(Tex("t", font_size=28))
-            y_label = axes.get_y_axis_label(Tex(r"$s_n$", font_size=28))
-            legend = VGroup(
-                Line(color=BLUE).set_stroke(width=6).set_length(0.5),
-                Tex(r"$s_0 = \frac{\sin((1-t)\theta)}{\sin\theta}$", color=BLUE, font_size=28),
-                Line(color=YELLOW).set_stroke(width=6).set_length(0.5),
-                Tex(r"$s_1 = \frac{\sin(t\theta)}{\sin\theta}$", color=YELLOW, font_size=28),
-            ).arrange(RIGHT, buff=0.3).next_to(axes, UP)
-            title = Tex(
-                r"Slerp Coefficients for $\theta = {:.0f}^\circ$".format(np.rad2deg(theta)),
-                font_size=36
-            ).next_to(legend, UP)
-            def s0_func(t):
-                if np.isclose(np.sin(theta), 0):
-                    return 1.0
-                return np.sin((1-t)*theta)/np.sin(theta)
-            def s1_func(t):
-                if np.isclose(np.sin(theta), 0):
-                    return 0.0
-                return np.sin(t*theta)/np.sin(theta)
-            s0_graph = axes.plot(s0_func, color=BLUE, x_range=[0,1]).set_clip_path(axes)
-            s1_graph = axes.plot(s1_func, color=YELLOW, x_range=[0,1]).set_clip_path(axes)
-            return VGroup(axes, x_label, y_label, legend, title, s0_graph, s1_graph)
-
-        scene_group = always_redraw(get_scene)
-        self.add(scene_group)
-        self.wait(0.5)
-        self.play(theta_tracker.animate.set_value(np.deg2rad(0.01)), run_time=5, rate_func=smooth)
-        self.wait(2)
 
 
 
