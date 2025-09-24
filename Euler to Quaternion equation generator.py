@@ -1,8 +1,6 @@
 import sympy as sp
 
-
 A1, A2, A3, B1, B2, B3 = sp.symbols('A1 A2 A3 B1 B2 B3')
-
 
 def euler_to_quaternion(order):
     return [
@@ -14,9 +12,6 @@ def euler_to_quaternion(order):
             for axis in range(3)
         ]
 
-    
-    
-# For quaternion multiplication
 def quaternion_multiply(q1, q2):
     w1, x1, y1, z1 = q1
     w2, x2, y2, z2 = q2
@@ -27,28 +22,18 @@ def quaternion_multiply(q1, q2):
         w1*z2 + x1*y2 - y1*x2 + z1*w2
     ]
 
-# Now compute the quaternion for each of the 12 orders
 orders = [
     'XYZ', 'ZYX', 'YZX', 'XZY', 'YXZ', 'ZXY', 
     'ZYZ', 'XYX', 'YXY', 'XZX', 'ZXZ', 'YZY'
 ]
-
-
 quaternions = {}
-
 
 for order in orders:
     q1, q2, q3 = euler_to_quaternion(order)
     quaternions[order] = quaternion_multiply(quaternion_multiply(q3, q2), q1)
     
-    
-
-# Display the results in terms of the symbolic formulas
 for order, quaternion in quaternions.items():
     print(f"Quaternion for Euler order {order}:")
     for i, component in enumerate(quaternion):
         print(f"Q{['w', 'x', 'y', 'z'][i]}: {component}")
     print()
-
-
-
